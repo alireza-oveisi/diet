@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Meal Plan</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
+    --border: #2e2e2e; --text: #f0ece4; --muted: #6b6b6b; --subtle: #3a3a3a;
+    --green: #3ecf8e; --green-bg: #0e2a1c; --amber: #f5a623; --amber-bg: #271d0a;
+    --blue: #4a9eff; --accent: #e8d5b0; --radius: 14px; --radius-sm: 8px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; min-height: 100vh; padding-bottom: 2rem; }
+  header { padding: 1.25rem 1.25rem 0.75rem; position: sticky; top: 0; background: var(--bg); z-index: 10; border-bottom: 1px solid var(--border); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+  .reset-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 12px; padding: 5px 10px; border-radius: 20px; cursor: pointer; }
+  .day-scroll { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .day-scroll::-webkit-scrollbar { display: none; }
+  .day-pill { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid var(--border); background: none; color: var(--muted); cursor: pointer; }
+  .day-pill.active { background: var(--accent); color: #0f0f0f; border-color: var(--accent); font-weight: 600; }
+  .day-pill.complete { border-color: var(--green); color: var(--green); }
+  main { padding: 1rem 1.25rem; }
+  .progress-bar-wrap { margin-bottom: 1rem; }
+  .progress-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .progress-track { height: 4px; background: var(--subtle); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--green); border-radius: 2px; }
+  .kcal-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .kcal-card { background: var(--surface); border-radius: var(--radius-sm); padding: 10px 12px; border: 1px solid var(--border); }
+  .kcal-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+  .kcal-val { font-size: 18px; font-weight: 600; }
+  .kcal-sub { font-size: 11px; color: var(--muted); }
+  .meal-section { margin-bottom: 12px; }
+  .meal-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+  .meal-card.checked { opacity: 0.5; }
+  .meal-tap { display: flex; align-items: flex-start; gap: 12px; padding: 14px; cursor: pointer; width: 100%; background: none; border: none; text-align: left; color: inherit; }
+  .check-circle { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; }
+  .meal-card.checked .check-circle { background: var(--green); border-color: var(--green); }
+  .meal-body { flex: 1; min-width: 0; }
+  .meal-type-tag { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 3px; }
+  .tag-breakfast { color: var(--amber); }
+  .tag-dinner { color: var(--blue); }
+  .meal-name { font-size: 15px; font-weight: 600; margin-bottom: 3px; line-height: 1.3; }
+  .meal-card.checked .meal-name { color: var(--muted); text-decoration: line-through; }
+  .meal-desc { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 8px; }
+  .macro-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mpill { font-size: 11px; padding: 3px 8px; border-radius: 20px; }
+  .mpill-p { background: #0e2a1c; color: #3ecf8e; }
+  .mpill-c { background: #271d0a; color: #f5a623; }
+  .mpill-f { background: #151030; color: #a89de8; }
+  .mpill-out { background: var(--surface2); color: var(--muted); }
+  .mpill-kcal { background: var(--surface2); color: var(--text); font-weight: 600; }
+  .lunch-divider { background: var(--green-bg); border: 1px solid #1e4a32; border-radius: var(--radius); padding: 12px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .lunch-icon { width: 26px; height: 26px; border-radius: 50%; background: #1a3d27; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; }
+  .lunch-text { flex: 1; }
+  .lunch-title { font-size: 13px; font-weight: 600; color: var(--green); margin-bottom: 2px; }
+  .lunch-sub { font-size: 12px; color: #2e8a5e; }
+  .lunch-check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #1e4a32; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; background: none; }
+  .lunch-check.checked { background: var(--green); border-color: var(--green); }
+  .tip-banner { background: var(--amber-bg); border: 1px solid #3d2e10; border-radius: var(--radius-sm); padding: 10px 12px; font-size: 12px; color: #b07a1a; margin-bottom: 1rem; line-height: 1.5; }
+  .tip-banner strong { color: var(--amber); }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <h1>Meal Plan</h1>
+    <button class="reset-btn" onclick="resetAll()">Reset week</button>
+  </div>
+  <div class="day-scroll" id="dayNav"></div>
+</header>
+<main id="mainContent"></main>
+
+<script>
+var DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+var meals = [
+  { breakfast: { name:'Turkish eggs (çılbır)', desc:'Poached eggs on Greek yogurt, chilli butter drizzle, 1 slice wholegrain toast', kcal:420, p:32, c:28, f:18, out:false }, dinner: { name:'Grilled chicken thigh + roasted veg', desc:'180g skinless thigh, zucchini & capsicum in olive oil, tabbouleh on the side', kcal:490, p:42, c:22, f:20, out:false }, tip:null },
+  { breakfast: { name:'Smoked salmon & egg scramble', desc:'3 eggs scrambled with 60g smoked salmon, capers, on 1 slice rye bread', kcal:410, p:38, c:18, f:19, out:false }, dinner: { name:'Chicken shawarma bowl', desc:'Order out — shawarma over salad or rice, skip fries, ask for extra salad', kcal:520, p:38, c:35, f:16, out:true }, tip:'Al Safadi or similar. Ask for sauce on the side.' },
+  { breakfast: { name:'Overnight oats', desc:'80g oats, 150g Greek yogurt, 1 scoop protein, berries, chia — prep the night before', kcal:450, p:35, c:48, f:10, out:false }, dinner: { name:'Baked salmon fillet', desc:'180g salmon, lemon-herb crust, steamed broccoli & cauliflower, no starch', kcal:480, p:44, c:12, f:24, out:false }, tip:null },
+  { breakfast: { name:'Labneh & egg whites wrap', desc:'4 egg whites, 2 tbsp labneh, cucumber, tomato in a whole wheat wrap', kcal:380, p:30, c:30, f:10, out:false }, dinner: { name:'Grilled hammour', desc:'Order out — grilled hammour fillet, sauce on side, fattoush salad', kcal:460, p:46, c:18, f:14, out:true }, tip:'Any seafood spot — always specify grilled, not fried.' },
+  { breakfast: { name:'Protein smoothie bowl', desc:'1 scoop protein, frozen banana, almond milk, spinach — thick blend, 30g granola on top', kcal:400, p:32, c:42, f:8, out:false }, dinner: { name:'Beef kofta + Greek salad', desc:'3 kofta skewers (200g mince), cucumber-tomato salad, 2 tbsp hummus, no bread', kcal:530, p:40, c:14, f:28, out:false }, tip:null },
+  { breakfast: { name:'Full eggs & avocado plate', desc:'3 eggs any style, ½ avocado, cherry tomatoes, 1 slice sourdough', kcal:460, p:24, c:28, f:28, out:false }, dinner: { name:'Japanese sashimi platter', desc:'Order out — salmon & tuna sashimi, edamame, miso soup. Skip the rice rolls.', kcal:490, p:48, c:16, f:16, out:true }, tip:'Nobu, Zuma, or any sushi spot. Sashimi only.' },
+  { breakfast: { name:'Ricotta pancakes', desc:'2 ricotta + egg + oat flour pancakes, berries, light honey drizzle', kcal:440, p:28, c:44, f:16, out:false }, dinner: { name:'Chicken & lentil soup', desc:'150g shredded chicken, red lentils, cumin broth, lemon. Batch-cook friendly.', kcal:450, p:42, c:30, f:8, out:false }, tip:null }
+];
+
+var checked = {};
+var activeDay = 0;
+
+function storageGet(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
+function storageSet(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
+function storageRemove(k) { try { localStorage.removeItem(k); } catch(e) {} }
+
+function loadState() {
+  for (var d = 0; d < 7; d++) {
+    checked[d] = {};
+    ['breakfast','lunch','dinner'].forEach(function(m) {
+      checked[d][m] = storageGet('mp_' + d + '_' + m) === '1';
+    });
+  }
+}
+
+function saveState(day, meal, val) {
+  checked[day][meal] = val;
+  storageSet('mp_' + day + '_' + meal, val ? '1' : '0');
+}
+
+function resetAll() {
+  if (!confirm('Reset all checkmarks?')) return;
+  for (var d = 0; d < 7; d++) {
+    ['breakfast','lunch','dinner'].forEach(function(m) {
+      storageRemove('mp_' + d + '_' + m);
+      checked[d][m] = false;
+    });
+  }
+  render();
+}
+
+function dayDone(d) {
+  return ['breakfast','lunch','dinner'].filter(function(m){ return checked[d][m]; }).length;
+}
+
+function checkSVG(dark) {
+  var c = dark ? '#0f0f0f' : '#0f0f0f';
+  return '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="' + c + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+
+function mealCard(d, mealKey, data, tagCls, tagLabel) {
+  var ch = checked[d][mealKey];
+  return '<div class="meal-section"><div class="meal-card' + (ch ? ' checked' : '') + '" id="card-' + d + '-' + mealKey + '">' +
+    '<button class="meal-tap" onclick="toggle(' + d + ',\'' + mealKey + '\')">' +
+      '<div class="check-circle">' + (ch ? checkSVG() : '') + '</div>' +
+      '<div class="meal-body">' +
+        '<div class="meal-type-tag ' + tagCls + '">' + tagLabel + '</div>' +
+        '<div class="meal-name">' + data.name + '</div>' +
+        '<div class="meal-desc">' + data.desc + '</div>' +
+        '<div class="macro-row">' +
+          '<span class="mpill mpill-kcal">' + data.kcal + ' kcal</span>' +
+          '<span class="mpill mpill-p">' + data.p + 'g protein</span>' +
+          '<span class="mpill mpill-c">' + data.c + 'g carbs</span>' +
+          '<span class="mpill mpill-f">' + data.f + 'g fat</span>' +
+          (data.out ? '<span class="mpill mpill-out">order out</span>' : '') +
+        '</div>' +
+      '</div>' +
+    '</button>' +
+  '</div></div>';
+}
+
+function renderNav() {
+  document.getElementById('dayNav').innerHTML = DAYS.map(function(label, i) {
+    var cls = 'day-pill';
+    if (i === activeDay) cls += ' active';
+    else if (dayDone(i) === 3) cls += ' complete';
+    return '<button class="' + cls + '" onclick="switchDay(' + i + ')">' + label + '</button>';
+  }).join('');
+}
+
+function renderMain() {
+  var d = activeDay;
+  var data = meals[d];
+  var done = dayDone(d);
+  var pct = Math.round((done / 3) * 100);
+  var lunchChecked = checked[d]['lunch'];
+  var total = data.breakfast.kcal + 600 + data.dinner.kcal;
+
+  var html = '';
+
+  html += '<div class="progress-bar-wrap">' +
+    '<div class="progress-meta"><span>' + done + ' of 3 meals done</span><span>' + pct + '%</span></div>' +
+    '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+  '</div>';
+
+  html += '<div class="kcal-summary">' +
+    '<div class="kcal-card"><div class="kcal-label">Day target</div><div class="kcal-val">~1,900</div><div class="kcal-sub">kcal</div></div>' +
+    '<div class="kcal-card"><div class="kcal-label">Est. today</div><div class="kcal-val">~' + total + '</div><div class="kcal-sub">lunch ~600 kcal</div></div>' +
+  '</div>';
+
+  if (data.tip) {
+    html += '<div class="tip-banner"><strong>Tip:</strong> ' + data.tip + '</div>';
+  }
+
+  html += mealCard(d, 'breakfast', data.breakfast, 'tag-breakfast', 'Breakfast');
+
+  html += '<div class="lunch-divider">' +
+    '<div class="lunch-icon">🥗</div>' +
+    '<div class="lunch-text"><div class="lunch-title">Lunch — your usual</div><div class="lunch-sub">Aim 500–700 kcal · high protein</div></div>' +
+    '<button class="lunch-check' + (lunchChecked ? ' checked' : '') + '" onclick="toggle(' + d + ',\'lunch\')">' + (lunchChecked ? checkSVG() : '') + '</button>' +
+  '</div>';
+
+  html += mealCard(d, 'dinner', data.dinner, 'tag-dinner', 'Dinner');
+
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function render() { renderNav(); renderMain(); }
+
+function switchDay(i) { activeDay = i; render(); window.scrollTo(0,0); }
+
+function toggle(day, meal) {
+  saveState(day, meal, !checked[day][meal]);
+  render();
+}
+
+loadState();
+render();
+</script>
+</body>
+</html>
