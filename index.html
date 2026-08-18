@@ -3,16 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Meal Plan</title>
+<title>Plan</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   :root {
     --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
     --border: #2e2e2e; --text: #f0ece4; --muted: #6b6b6b; --subtle: #3a3a3a;
-    --green: #3ecf8e; --green-bg: #0e2a1c; --amber: #f5a623; --amber-bg: #271d0a;
-    --blue: #4a9eff; --accent: #e8d5b0; --radius: 14px; --radius-sm: 8px;
+    --green: #3ecf8e; --green-bg: #0e2a1c;
+    --amber: #f5a623; --amber-bg: #271d0a;
+    --blue: #4a9eff; --blue-bg: #0a1a2e;
+    --purple: #a78bfa; --purple-bg: #1a1030;
+    --accent: #e8d5b0; --radius: 14px; --radius-sm: 8px;
   }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; min-height: 100vh; padding-bottom: 2rem; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; min-height: 100vh; padding-bottom: 5rem; }
   header { padding: 1.25rem 1.25rem 0.75rem; position: sticky; top: 0; background: var(--bg); z-index: 10; border-bottom: 1px solid var(--border); }
   .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
   h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
@@ -22,6 +25,11 @@
   .day-pill { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid var(--border); background: none; color: var(--muted); cursor: pointer; }
   .day-pill.active { background: var(--accent); color: #0f0f0f; border-color: var(--accent); font-weight: 600; }
   .day-pill.complete { border-color: var(--green); color: var(--green); }
+  .tab-bar { display: flex; gap: 0; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+  .tab-btn { flex: 1; padding: 9px 4px; font-size: 13px; font-weight: 500; background: none; border: none; color: var(--muted); cursor: pointer; }
+  .tab-btn.active { background: var(--surface); color: var(--text); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
   main { padding: 1rem 1.25rem; }
   .progress-bar-wrap { margin-bottom: 1rem; }
   .progress-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
@@ -38,12 +46,15 @@
   .meal-tap { display: flex; align-items: flex-start; gap: 12px; padding: 14px; cursor: pointer; width: 100%; background: none; border: none; text-align: left; color: inherit; }
   .check-circle { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; }
   .meal-card.checked .check-circle { background: var(--green); border-color: var(--green); }
+  .workout-card.checked .check-circle { background: var(--purple); border-color: var(--purple); }
   .meal-body { flex: 1; min-width: 0; }
   .meal-type-tag { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 3px; }
   .tag-breakfast { color: var(--amber); }
   .tag-dinner { color: var(--blue); }
+  .tag-workout { color: var(--purple); }
+  .tag-rest { color: var(--muted); }
   .meal-name { font-size: 15px; font-weight: 600; margin-bottom: 3px; line-height: 1.3; }
-  .meal-card.checked .meal-name { color: var(--muted); text-decoration: line-through; }
+  .meal-card.checked .meal-name, .workout-card.checked .meal-name { color: var(--muted); text-decoration: line-through; }
   .meal-desc { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 8px; }
   .macro-row { display: flex; gap: 6px; flex-wrap: wrap; }
   .mpill { font-size: 11px; padding: 3px 8px; border-radius: 20px; }
@@ -52,6 +63,9 @@
   .mpill-f { background: #151030; color: #a89de8; }
   .mpill-out { background: var(--surface2); color: var(--muted); }
   .mpill-kcal { background: var(--surface2); color: var(--text); font-weight: 600; }
+  .mpill-burn { background: #1a1030; color: #a78bfa; }
+  .mpill-dur { background: var(--surface2); color: var(--muted); }
+  .mpill-zone { background: #0a1a2e; color: #4a9eff; }
   .lunch-divider { background: var(--green-bg); border: 1px solid #1e4a32; border-radius: var(--radius); padding: 12px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .lunch-icon { width: 26px; height: 26px; border-radius: 50%; background: #1a3d27; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; }
   .lunch-text { flex: 1; }
@@ -61,12 +75,20 @@
   .lunch-check.checked { background: var(--green); border-color: var(--green); }
   .tip-banner { background: var(--amber-bg); border: 1px solid #3d2e10; border-radius: var(--radius-sm); padding: 10px 12px; font-size: 12px; color: #b07a1a; margin-bottom: 1rem; line-height: 1.5; }
   .tip-banner strong { color: var(--amber); }
+  .rest-banner { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 16px; text-align: center; margin-bottom: 12px; }
+  .rest-emoji { font-size: 32px; margin-bottom: 8px; }
+  .rest-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .rest-sub { font-size: 13px; color: var(--muted); }
+  .workout-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; margin-bottom: 12px; }
+  .workout-card.checked { opacity: 0.5; }
+  .section-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+  .week-badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 20px; background: var(--purple-bg); color: var(--purple); margin-bottom: 12px; }
 </style>
 </head>
 <body>
 <header>
   <div class="header-top">
-    <h1>Meal Plan</h1>
+    <h1>My Plan</h1>
     <button class="reset-btn" onclick="resetAll()">Reset week</button>
   </div>
   <div class="day-scroll" id="dayNav"></div>
@@ -82,12 +104,47 @@ var meals = [
   { breakfast: { name:'Overnight oats', desc:'80g oats, 150g Greek yogurt, 1 scoop protein, berries, chia — prep the night before', kcal:450, p:35, c:48, f:10, out:false }, dinner: { name:'Baked salmon fillet', desc:'180g salmon, lemon-herb crust, steamed broccoli & cauliflower, no starch', kcal:480, p:44, c:12, f:24, out:false }, tip:null },
   { breakfast: { name:'Labneh & egg whites wrap', desc:'4 egg whites, 2 tbsp labneh, cucumber, tomato in a whole wheat wrap', kcal:380, p:30, c:30, f:10, out:false }, dinner: { name:'Grilled hammour', desc:'Order out — grilled hammour fillet, sauce on side, fattoush salad', kcal:460, p:46, c:18, f:14, out:true }, tip:'Any seafood spot — always specify grilled, not fried.' },
   { breakfast: { name:'Protein smoothie bowl', desc:'1 scoop protein, frozen banana, almond milk, spinach — thick blend, 30g granola on top', kcal:400, p:32, c:42, f:8, out:false }, dinner: { name:'Beef kofta + Greek salad', desc:'3 kofta skewers (200g mince), cucumber-tomato salad, 2 tbsp hummus, no bread', kcal:530, p:40, c:14, f:28, out:false }, tip:null },
-  { breakfast: { name:'Full eggs & avocado plate', desc:'3 eggs any style, ½ avocado, cherry tomatoes, 1 slice sourdough', kcal:460, p:24, c:28, f:28, out:false }, dinner: { name:'Japanese sashimi platter', desc:'Order out — salmon & tuna sashimi, edamame, miso soup. Skip the rice rolls.', kcal:490, p:48, c:16, f:16, out:true }, tip:'Nobu, Zuma, or any sushi spot. Sashimi only.' },
+  { breakfast: { name:'Full eggs & avocado plate', desc:'3 eggs any style, half avocado, cherry tomatoes, 1 slice sourdough', kcal:460, p:24, c:28, f:28, out:false }, dinner: { name:'Japanese sashimi platter', desc:'Order out — salmon & tuna sashimi, edamame, miso soup. Skip the rice rolls.', kcal:490, p:48, c:16, f:16, out:true }, tip:'Nobu, Zuma, or any sushi spot. Sashimi only.' },
   { breakfast: { name:'Ricotta pancakes', desc:'2 ricotta + egg + oat flour pancakes, berries, light honey drizzle', kcal:440, p:28, c:44, f:16, out:false }, dinner: { name:'Chicken & lentil soup', desc:'150g shredded chicken, red lentils, cumin broth, lemon. Batch-cook friendly.', kcal:450, p:42, c:30, f:8, out:false }, tip:null }
+];
+
+var workouts = [
+  { week: 1, type:'cycle',  name:'Cycle — steady state',       desc:'45 min at 65-70% max HR (zone 2). Conversational pace throughout.', burn:350, dur:'45 min', zone:'Zone 2' },
+  { week: 1, type:'swim',   name:'Swim — technique focus',     desc:'30 min easy laps. Focus on stroke form, not speed.', burn:270, dur:'30 min', zone:'Zone 1-2' },
+  { week: 1, type:'rest',   name:'Active rest',                desc:'30 min walk or light yoga. Keep it gentle.', burn:100, dur:'30 min', zone:null },
+  { week: 1, type:'cycle',  name:'Cycle — moderate intervals', desc:'40 min: 5 min easy warmup, then 5x (2 min harder + 3 min easy), 5 min cooldown.', burn:380, dur:'40 min', zone:'Zone 2-3' },
+  { week: 1, type:'swim',   name:'Swim — endurance',           desc:'40 min continuous at steady pace. No sprinting.', burn:350, dur:'40 min', zone:'Zone 2' },
+  { week: 1, type:'body',   name:'Bodyweight circuit',         desc:'3 sets x 10 reps: push-ups, squats, tricep dips, plank 30s holds.', burn:200, dur:'35 min', zone:null },
+  { week: 1, type:'rest',   name:'Full rest',                  desc:'Sleep 7-9 hrs. Light walking optional. No training.', burn:0,   dur:null,     zone:null },
+
+  { week: 2, type:'cycle',  name:'Cycle — longer steady',      desc:'60 min zone 2. Add 15 min from last week. Keep HR conversational.', burn:460, dur:'60 min', zone:'Zone 2' },
+  { week: 2, type:'swim',   name:'Swim — interval sets',       desc:'40 min: 4 x (100m fast / 50m easy). Rest 30s between sets.', burn:380, dur:'40 min', zone:'Zone 3' },
+  { week: 2, type:'rest',   name:'Active rest + mobility',     desc:'30 min walk. Add hip flexor stretches and shoulder mobility work.', burn:100, dur:'30 min', zone:null },
+  { week: 2, type:'cycle',  name:'Cycle — HIIT session',       desc:'35 min: 5 min warmup, 10x (30s all-out / 90s easy), 5 min cooldown.', burn:420, dur:'35 min', zone:'Zone 4-5' },
+  { week: 2, type:'swim',   name:'Swim — 50 min endurance',    desc:'50 min mixed strokes (freestyle + backstroke). Work different muscles.', burn:440, dur:'50 min', zone:'Zone 2' },
+  { week: 2, type:'body',   name:'Bodyweight strength',        desc:'4 sets x 12: push-ups, Bulgarian split squats, plank 40s, glute bridges.', burn:220, dur:'40 min', zone:null },
+  { week: 2, type:'rest',   name:'Rest',                       desc:'Prioritize sleep and food prep for the week ahead.', burn:0,   dur:null,     zone:null },
+
+  { week: 3, type:'cycle',  name:'Cycle — 75 min endurance',   desc:'75 min zone 2 with 2x 10 min tempo pushes at 80% HR in the middle.', burn:580, dur:'75 min', zone:'Zone 2-3' },
+  { week: 3, type:'swim',   name:'Swim — pyramid sets',        desc:'50m / 100m / 150m / 100m / 50m with 45s rest between. Total ~45 min.', burn:420, dur:'45 min', zone:'Zone 3' },
+  { week: 3, type:'cycle',  name:'Cycle — recovery spin',      desc:'30 min very easy zone 1. Active recovery only, no effort.', burn:180, dur:'30 min', zone:'Zone 1' },
+  { week: 3, type:'cycle',  name:'Cycle — max HIIT',           desc:'40 min: 5 min warmup, 12x (40s all-out / 80s easy), 5 min cooldown.', burn:500, dur:'40 min', zone:'Zone 4-5' },
+  { week: 3, type:'swim',   name:'Swim — 60 min endurance',    desc:'Longest swim of the month. Steady effort, mixed strokes.', burn:530, dur:'60 min', zone:'Zone 2' },
+  { week: 3, type:'body',   name:'Bodyweight strength + core', desc:'Push-ups, dips, pistol squats (assisted ok), hanging knee raises. 4x10.', burn:250, dur:'40 min', zone:null },
+  { week: 3, type:'rest',   name:'Full rest',                  desc:'Week 3 is the hardest. Protect your recovery tonight.', burn:0,   dur:null,     zone:null },
+
+  { week: 4, type:'cycle',  name:'Cycle — 60 min steady',      desc:'Slight deload this week. Quality over intensity. Zone 2 only.', burn:460, dur:'60 min', zone:'Zone 2' },
+  { week: 4, type:'swim',   name:'Swim — technique + speed',   desc:'50 min: 15 min drills, then 6x 50m sprint with 40s rest.', burn:440, dur:'50 min', zone:'Zone 2-4' },
+  { week: 4, type:'rest',   name:'Active rest',                desc:'Walk + full body stretch. Focus on tight areas from the week.', burn:100, dur:'30 min', zone:null },
+  { week: 4, type:'cycle',  name:'Cycle — tempo intervals',    desc:'45 min: 5 min warmup, 3x 8 min at 80% HR with 4 min easy, cooldown.', burn:430, dur:'45 min', zone:'Zone 3' },
+  { week: 4, type:'swim',   name:'Swim — 50 min endurance',    desc:'Steady effort. Enjoy the rhythm — you have earned it.', burn:440, dur:'50 min', zone:'Zone 2' },
+  { week: 4, type:'body',   name:'Bodyweight circuit + padel', desc:'30 min circuit (push-ups, dips, squats, core), then padel if you can.', burn:350, dur:'60+ min', zone:null },
+  { week: 4, type:'rest',   name:'Rest — end of month',        desc:'Measure your weight. Reflect. Plan the next phase.', burn:0,   dur:null,     zone:null }
 ];
 
 var checked = {};
 var activeDay = 0;
+var activeTab = 'meals';
 
 function storageGet(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
 function storageSet(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
@@ -96,7 +153,7 @@ function storageRemove(k) { try { localStorage.removeItem(k); } catch(e) {} }
 function loadState() {
   for (var d = 0; d < 7; d++) {
     checked[d] = {};
-    ['breakfast','lunch','dinner'].forEach(function(m) {
+    ['breakfast','lunch','dinner','workout'].forEach(function(m) {
       checked[d][m] = storageGet('mp_' + d + '_' + m) === '1';
     });
   }
@@ -110,7 +167,7 @@ function saveState(day, meal, val) {
 function resetAll() {
   if (!confirm('Reset all checkmarks?')) return;
   for (var d = 0; d < 7; d++) {
-    ['breakfast','lunch','dinner'].forEach(function(m) {
+    ['breakfast','lunch','dinner','workout'].forEach(function(m) {
       storageRemove('mp_' + d + '_' + m);
       checked[d][m] = false;
     });
@@ -119,17 +176,17 @@ function resetAll() {
 }
 
 function dayDone(d) {
-  return ['breakfast','lunch','dinner'].filter(function(m){ return checked[d][m]; }).length;
+  return ['breakfast','lunch','dinner','workout'].filter(function(m){ return checked[d][m]; }).length;
 }
 
-function checkSVG(dark) {
-  var c = dark ? '#0f0f0f' : '#0f0f0f';
+function checkSVG(color) {
+  var c = color || '#0f0f0f';
   return '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="' + c + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 function mealCard(d, mealKey, data, tagCls, tagLabel) {
   var ch = checked[d][mealKey];
-  return '<div class="meal-section"><div class="meal-card' + (ch ? ' checked' : '') + '" id="card-' + d + '-' + mealKey + '">' +
+  return '<div class="meal-section"><div class="meal-card' + (ch ? ' checked' : '') + '">' +
     '<button class="meal-tap" onclick="toggle(' + d + ',\'' + mealKey + '\')">' +
       '<div class="check-circle">' + (ch ? checkSVG() : '') + '</div>' +
       '<div class="meal-body">' +
@@ -148,40 +205,75 @@ function mealCard(d, mealKey, data, tagCls, tagLabel) {
   '</div></div>';
 }
 
+function workoutCard(d, w) {
+  var ch = checked[d]['workout'];
+  if (w.type === 'rest') {
+    return '<div class="rest-banner">' +
+      '<div class="rest-emoji">' + (w.burn === 0 && w.name.indexOf('Full') > -1 ? '😴' : '🚶') + '</div>' +
+      '<div class="rest-title">' + w.name + '</div>' +
+      '<div class="rest-sub">' + w.desc + '</div>' +
+    '</div>';
+  }
+  var typeLabel = w.type === 'cycle' ? 'Cycling' : w.type === 'swim' ? 'Swimming' : 'Strength';
+  return '<div class="workout-card' + (ch ? ' checked' : '') + '">' +
+    '<button class="meal-tap" onclick="toggle(' + d + ',\'workout\')">' +
+      '<div class="check-circle">' + (ch ? checkSVG('#0f0f0f') : '') + '</div>' +
+      '<div class="meal-body">' +
+        '<div class="meal-type-tag tag-workout">' + typeLabel + '</div>' +
+        '<div class="meal-name">' + w.name + '</div>' +
+        '<div class="meal-desc">' + w.desc + '</div>' +
+        '<div class="macro-row">' +
+          (w.burn > 0 ? '<span class="mpill mpill-burn">~' + w.burn + ' kcal burned</span>' : '') +
+          (w.dur ? '<span class="mpill mpill-dur">' + w.dur + '</span>' : '') +
+          (w.zone ? '<span class="mpill mpill-zone">' + w.zone + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+    '</button>' +
+  '</div>';
+}
+
 function renderNav() {
   document.getElementById('dayNav').innerHTML = DAYS.map(function(label, i) {
     var cls = 'day-pill';
     if (i === activeDay) cls += ' active';
-    else if (dayDone(i) === 3) cls += ' complete';
+    else if (dayDone(i) === 4) cls += ' complete';
     return '<button class="' + cls + '" onclick="switchDay(' + i + ')">' + label + '</button>';
   }).join('');
 }
 
 function renderMain() {
   var d = activeDay;
-  var data = meals[d];
+  var mdata = meals[d];
+  var wdata = workouts[d];
   var done = dayDone(d);
-  var pct = Math.round((done / 3) * 100);
+  var pct = Math.round((done / 4) * 100);
   var lunchChecked = checked[d]['lunch'];
-  var total = data.breakfast.kcal + 600 + data.dinner.kcal;
+  var total = mdata.breakfast.kcal + 600 + mdata.dinner.kcal;
 
   var html = '';
 
   html += '<div class="progress-bar-wrap">' +
-    '<div class="progress-meta"><span>' + done + ' of 3 meals done</span><span>' + pct + '%</span></div>' +
+    '<div class="progress-meta"><span>' + done + ' of 4 items done</span><span>' + pct + '%</span></div>' +
     '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
   '</div>';
+
+  html += '<div class="tab-bar">' +
+    '<button class="tab-btn' + (activeTab === 'meals' ? ' active' : '') + '" onclick="switchTab(\'meals\')">🍽 Meals</button>' +
+    '<button class="tab-btn' + (activeTab === 'workout' ? ' active' : '') + '" onclick="switchTab(\'workout\')">💪 Workout</button>' +
+  '</div>';
+
+  html += '<div class="tab-panel' + (activeTab === 'meals' ? ' active' : '') + '" id="tab-meals">';
 
   html += '<div class="kcal-summary">' +
     '<div class="kcal-card"><div class="kcal-label">Day target</div><div class="kcal-val">~1,900</div><div class="kcal-sub">kcal</div></div>' +
     '<div class="kcal-card"><div class="kcal-label">Est. today</div><div class="kcal-val">~' + total + '</div><div class="kcal-sub">lunch ~600 kcal</div></div>' +
   '</div>';
 
-  if (data.tip) {
-    html += '<div class="tip-banner"><strong>Tip:</strong> ' + data.tip + '</div>';
+  if (mdata.tip) {
+    html += '<div class="tip-banner"><strong>Tip:</strong> ' + mdata.tip + '</div>';
   }
 
-  html += mealCard(d, 'breakfast', data.breakfast, 'tag-breakfast', 'Breakfast');
+  html += mealCard(d, 'breakfast', mdata.breakfast, 'tag-breakfast', 'Breakfast');
 
   html += '<div class="lunch-divider">' +
     '<div class="lunch-icon">🥗</div>' +
@@ -189,19 +281,21 @@ function renderMain() {
     '<button class="lunch-check' + (lunchChecked ? ' checked' : '') + '" onclick="toggle(' + d + ',\'lunch\')">' + (lunchChecked ? checkSVG() : '') + '</button>' +
   '</div>';
 
-  html += mealCard(d, 'dinner', data.dinner, 'tag-dinner', 'Dinner');
+  html += mealCard(d, 'dinner', mdata.dinner, 'tag-dinner', 'Dinner');
+  html += '</div>';
+
+  html += '<div class="tab-panel' + (activeTab === 'workout' ? ' active' : '') + '" id="tab-workout">';
+  html += '<div class="week-badge">Week ' + wdata.week + ' · Day ' + (d + 1) + '</div>';
+  html += workoutCard(d, wdata);
+  html += '</div>';
 
   document.getElementById('mainContent').innerHTML = html;
 }
 
 function render() { renderNav(); renderMain(); }
-
 function switchDay(i) { activeDay = i; render(); window.scrollTo(0,0); }
-
-function toggle(day, meal) {
-  saveState(day, meal, !checked[day][meal]);
-  render();
-}
+function switchTab(t) { activeTab = t; render(); }
+function toggle(day, meal) { saveState(day, meal, !checked[day][meal]); render(); }
 
 loadState();
 render();
